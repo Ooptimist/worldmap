@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Earth } from './Earth'
 import { EarthControls } from './Controls'
-import { CountryBorders, CountryLabels, ProvinceBorders } from './Layers'
+import { CountryBorders, CountryLabels, ProvinceBorders, GridLines } from './Layers'
 
 export default function Scene() {
   return (
@@ -42,6 +42,7 @@ export default function Scene() {
           <CountryBorders />
           <CountryLabels />
           <ProvinceBorders />
+          <GridLines />
           <EarthControls />
         </Suspense>
       </Canvas>

@@ -12,6 +12,8 @@ export default function Toolbar() {
     setShowBorders,
     showLabels,
     setShowLabels,
+    showGrid,
+    setShowGrid,
     resetView 
   } = useEarthStore()
   
@@ -55,6 +57,14 @@ export default function Toolbar() {
         title={showLabels ? '隐藏标签' : '显示标签'}
       >
         🏷
+      </button>
+      
+      <button
+        className={`toolbar-btn ${showGrid ? 'active' : ''}`}
+        onClick={() => setShowGrid(!showGrid)}
+        title={showGrid ? '隐藏经纬线' : '显示经纬线'}
+      >
+        📐
       </button>
       
       <button

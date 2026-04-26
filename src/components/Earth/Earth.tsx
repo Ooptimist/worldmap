@@ -9,23 +9,16 @@ import Stars from './Stars'
 
 export default function Earth() {
   const earthRef = useRef<THREE.Mesh>(null)
-  const cloudsRef = useRef<THREE.Mesh>(null)
   
   const { isRotating, rotationSpeed, showAtmosphere, showClouds } = useEarthStore()
   
   // 地球几何体
   const earthGeometry = useMemo(() => new THREE.SphereGeometry(1, 64, 64), [])
   
-  // 云层几何体
-  const cloudsGeometry = useMemo(() => new THREE.SphereGeometry(1.01, 64, 64), [])
-  
   // 动画循环
   useFrame((_, delta) => {
     if (isRotating && earthRef.current) {
       earthRef.current.rotation.y += delta * 0.1 * rotationSpeed
-    }
-    if (isRotating && cloudsRef.current) {
-      cloudsRef.current.rotation.y += delta * 0.12 * rotationSpeed
     }
   })
   
@@ -40,11 +33,7 @@ export default function Earth() {
       </mesh>
       
       {/* 云层 */}
-      {showClouds && (
-        <mesh ref={cloudsRef} geometry={cloudsGeometry}>
-          <Clouds />
-        </mesh>
-      )}
+      {showClouds && <Clouds />}
       
       {/* 大气层 */}
       {showAtmosphere && <Atmosphere />}

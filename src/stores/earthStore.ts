@@ -9,6 +9,7 @@ interface EarthStore {
   showClouds: boolean
   showBorders: boolean
   showLabels: boolean
+  showGrid: boolean
   
   // 选中状态
   selectedCountry: Country | null
@@ -34,6 +35,7 @@ interface EarthStore {
   setShowClouds: (show: boolean) => void
   setShowBorders: (show: boolean) => void
   setShowLabels: (show: boolean) => void
+  setShowGrid: (show: boolean) => void
   setSelectedCountry: (country: Country | null) => void
   setSelectedProvince: (province: Province | null) => void
   setHoveredCountry: (country: Country | null) => void
@@ -54,6 +56,7 @@ export const useEarthStore = create<EarthStore>((set) => ({
   showClouds: true,
   showBorders: true,
   showLabels: false,
+  showGrid: false,
   selectedCountry: null,
   selectedProvince: null,
   hoveredCountry: null,
@@ -76,6 +79,7 @@ export const useEarthStore = create<EarthStore>((set) => ({
   setShowClouds: (showClouds) => set({ showClouds }),
   setShowBorders: (showBorders) => set({ showBorders }),
   setShowLabels: (showLabels) => set({ showLabels }),
+  setShowGrid: (showGrid) => set({ showGrid }),
   setSelectedCountry: (selectedCountry) => set({ selectedCountry }),
   setSelectedProvince: (selectedProvince) => set({ selectedProvince }),
   setHoveredCountry: (hoveredCountry) => set({ hoveredCountry }),
