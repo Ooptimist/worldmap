@@ -130,9 +130,13 @@ function generateQuestion(): QuizQuestion {
   return randomType.generate(randomCountry)
 }
 
-export default function QuizPanel() {
+interface QuizPanelProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+export default function QuizPanel({ isOpen, onClose }: QuizPanelProps) {
   const { setSelectedCountry } = useEarthStore()
-  const [isOpen, setIsOpen] = useState(false)
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
@@ -200,21 +204,16 @@ export default function QuizPanel() {
           0
         ),
       })
-      setIsOpen(false)
+      onClose()
     }
   }, [currentQuestion, setSelectedCountry])
   
-  if (!isOpen) {
-    return (
-      <button
-        className="toolbar-btn"
-        onClick={() => setIsOpen(true)}
-        title="地理知识问答"
-      >
-        📚
-      </button>
-    )
-  }
+  const handleClose = useCallback(() => {
+    onClose()
+    setCurrentQuestion(null)
+  }, [onClose])
+
+  if (!isOpen) return null
   
   return (
     <div className="quiz-panel">
@@ -222,10 +221,7 @@ export default function QuizPanel() {
         <div className="quiz-title">地理知识问答</div>
         <button
           className="quiz-close-btn"
-          onClick={() => {
-            setIsOpen(false)
-            setCurrentQuestion(null)
-          }}
+          onClick={handleClose}
         >
           ✕
         </button>

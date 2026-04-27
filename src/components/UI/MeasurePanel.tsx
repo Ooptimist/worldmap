@@ -7,8 +7,12 @@ interface MeasurePoint {
   name?: string
 }
 
-export default function MeasurePanel() {
-  const [isOpen, setIsOpen] = useState(false)
+interface MeasurePanelProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+export default function MeasurePanel({ isOpen, onClose }: MeasurePanelProps) {
   const [point1, setPoint1] = useState<MeasurePoint>({ lat: 0, lon: 0 })
   const [point2, setPoint2] = useState<MeasurePoint>({ lat: 0, lon: 0 })
   const [distance, setDistance] = useState<number | null>(null)
@@ -55,27 +59,17 @@ export default function MeasurePanel() {
     }
   }, [])
   
-  if (!isOpen) {
-    return (
-      <button
-        className="toolbar-btn"
-        onClick={() => setIsOpen(true)}
-        title="距离测量"
-      >
-        📏
-      </button>
-    )
-  }
+  if (!isOpen) return null
   
   return (
     <>
-      <div className="overlay" onClick={() => setIsOpen(false)} />
+      <div className="overlay" onClick={onClose} />
       <div className="measure-panel">
         <div className="measure-header">
           <div className="measure-title">距离测量</div>
           <button
             className="measure-close-btn"
-            onClick={() => setIsOpen(false)}
+            onClick={onClose}
           >
             ✕
           </button>

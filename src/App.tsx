@@ -6,6 +6,8 @@ import './styles/global.css'
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true)
+  const [isQuizOpen, setIsQuizOpen] = useState(false)
+  const [isMeasureOpen, setIsMeasureOpen] = useState(false)
   const { selectedCountry } = useEarthStore()
   
   // 模拟加载
@@ -39,13 +41,16 @@ export default function App() {
         {selectedCountry && <InfoPanel />}
         
         {/* 问答面板 */}
-        <QuizPanel />
+        <QuizPanel isOpen={isQuizOpen} onClose={() => setIsQuizOpen(false)} />
         
         {/* 测量工具 */}
-        <MeasurePanel />
+        <MeasurePanel isOpen={isMeasureOpen} onClose={() => setIsMeasureOpen(false)} />
         
         {/* 工具栏 */}
-        <Toolbar />
+        <Toolbar
+          onQuizClick={() => setIsQuizOpen(true)}
+          onMeasureClick={() => setIsMeasureOpen(true)}
+        />
       </div>
     </div>
   )

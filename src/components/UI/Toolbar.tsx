@@ -1,11 +1,9 @@
 import { useEarthStore } from '@/stores/earthStore'
 
-export default function Toolbar() {
+export default function Toolbar({ onQuizClick, onMeasureClick }: { onQuizClick: () => void; onMeasureClick: () => void }) {
   const { 
     isRotating, 
     setIsRotating, 
-    showAtmosphere, 
-    setShowAtmosphere,
     showClouds,
     setShowClouds,
     showBorders,
@@ -25,14 +23,6 @@ export default function Toolbar() {
         title={isRotating ? '停止旋转' : '开始旋转'}
       >
         {isRotating ? '⏸' : '▶'}
-      </button>
-      
-      <button
-        className={`toolbar-btn ${showAtmosphere ? 'active' : ''}`}
-        onClick={() => setShowAtmosphere(!showAtmosphere)}
-        title={showAtmosphere ? '隐藏大气层' : '显示大气层'}
-      >
-        🌫
       </button>
       
       <button
@@ -65,6 +55,22 @@ export default function Toolbar() {
         title={showGrid ? '隐藏经纬线' : '显示经纬线'}
       >
         📐
+      </button>
+      
+      <button
+        className="toolbar-btn"
+        onClick={onQuizClick}
+        title="地理知识问答"
+      >
+        📚
+      </button>
+      
+      <button
+        className="toolbar-btn"
+        onClick={onMeasureClick}
+        title="距离测量"
+      >
+        📏
       </button>
       
       <button
