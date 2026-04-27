@@ -1,22 +1,16 @@
-import { useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useEarthStore } from '@/stores/earthStore'
 import { formatNumber, formatArea } from '@/utils/geo'
 import { getCountryById } from '@/data/countries'
 
 export default function InfoPanel() {
   const { selectedCountry, setSelectedCountry } = useEarthStore()
-  
-  // 获取国家详细信息
+  const [expanded, setExpanded] = useState(false)
+
   const countryInfo = useMemo(() => {
     if (!selectedCountry) return null
-    
-    // 尝试从数据中获取
     const data = getCountryById(selectedCountry.id)
-    if (data) {
-      return data
-    }
-    
-    // 返回默认数据
+    if (data) return data
     return {
       name: selectedCountry.name,
       nameEn: selectedCountry.nameEn,
@@ -43,192 +37,146 @@ export default function InfoPanel() {
       hdi: 0,
     }
   }, [selectedCountry])
-  
-  if (!selectedCountry || !countryInfo) {
-    return null
-  }
-  
+
+  if (!selectedCountry || !countryInfo) return null
+
+  // 核心信息：始终展示
+  const coreItems = [
+    { label: '首都', value: countryInfo.capital },
+    { label: '大洲', value: countryInfo.continent },
+    { label: '人口', value: formatNumber(countryInfo.population) },
+    { label: '面积', value: formatArea(countryInfo.area) },
+  ]
+
+  // 详细信息：展开后展示
+  const detailSections = [
+    {
+      title: '地理',
+      items: [
+        { label: '气候', value: countryInfo.climate },
+        { label: '地形', value: countryInfo.terrain },
+        { label: '坐标', value: `${countryInfo.coordinates.lat.toFixed(2)}°, ${countryInfo.coordinates.lon.toFixed(2)}°` },
+        { label: '时区', value: countryInfo.timezone },
+      ],
+    },
+    {
+      title: '经济',
+      items: [
+        { label: 'GDP', value: `$${formatNumber(countryInfo.gdp)}` },
+        { label: '货币', value: countryInfo.currency },
+        { label: '语言', value: countryInfo.languages?.join(', ') || '未知' },
+        { label: '政体', value: countryInfo.government },
+      ],
+    },
+    {
+      title: '社会',
+      items: [
+        { label: '识字率', value: countryInfo.literacy },
+        { label: '预期寿命', value: countryInfo.lifeExpectancy },
+        { label: 'HDI', value: `${countryInfo.hdi}` },
+        { label: '宗教', value: countryInfo.religion },
+      ],
+    },
+  ]
+
   return (
     <div className="info-panel">
       <div className="info-panel-header">
-        <button 
-          className="info-close-btn"
-          onClick={() => setSelectedCountry(null)}
-        >
-          ✕
+        <div>
+          <div className="info-panel-title">{countryInfo.name}</div>
+          <div className="info-panel-subtitle">{countryInfo.nameEn}</div>
+        </div>
+        <button className="info-close-btn" onClick={() => setSelectedCountry(null)}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
         </button>
-        <div className="info-panel-title">{countryInfo.name}</div>
-        <div className="info-panel-subtitle">{countryInfo.nameEn}</div>
       </div>
-      
+
       <div className="info-panel-content">
-        {/* 基本信息 */}
-        <div className="info-section">
-          <div className="info-section-title">基本信息</div>
-          <div className="info-grid">
-            <div className="info-item">
-              <div className="info-item-label">首都</div>
-              <div className="info-item-value">{countryInfo.capital}</div>
+        {/* 核心：始终可见 */}
+        <div className="info-grid">
+          {coreItems.map((item) => (
+            <div key={item.label} className="info-item">
+              <div className="info-item-label">{item.label}</div>
+              <div className="info-item-value">{item.value}</div>
             </div>
-            <div className="info-item">
-              <div className="info-item-label">大洲</div>
-              <div className="info-item-value">{countryInfo.continent}</div>
-            </div>
-            <div className="info-item">
-              <div className="info-item-label">人口</div>
-              <div className="info-item-value">
-                {formatNumber(countryInfo.population)}
-              </div>
-            </div>
-            <div className="info-item">
-              <div className="info-item-label">面积</div>
-              <div className="info-item-value">
-                {formatArea(countryInfo.area)}
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
-        
-        {/* 地理信息 */}
-        <div className="info-section">
-          <div className="info-section-title">地理信息</div>
-          <div className="info-grid">
-            <div className="info-item">
-              <div className="info-item-label">气候</div>
-              <div className="info-item-value">{countryInfo.climate}</div>
-            </div>
-            <div className="info-item">
-              <div className="info-item-label">地形</div>
-              <div className="info-item-value">{countryInfo.terrain}</div>
-            </div>
-            <div className="info-item">
-              <div className="info-item-label">坐标</div>
-              <div className="info-item-value">
-                {countryInfo.coordinates.lat.toFixed(2)}°N, {countryInfo.coordinates.lon.toFixed(2)}°E
+
+        {/* 展开/收起 */}
+        <button
+          onClick={() => setExpanded(!expanded)}
+          style={{
+            width: '100%',
+            padding: '8px 0',
+            margin: '10px 0',
+            background: 'none',
+            border: 'none',
+            borderTop: '1px solid var(--border)',
+            color: 'var(--text-muted)',
+            fontSize: '11px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '4px',
+          }}
+        >
+          {expanded ? '收起详情' : '查看详情'}
+          <svg
+            width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+            style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
+
+        {/* 详细信息 */}
+        {expanded && (
+          <>
+            {detailSections.map((section) => (
+              <div key={section.title} className="info-section">
+                <div className="info-section-title">{section.title}</div>
+                <div className="info-grid">
+                  {section.items.map((item) => (
+                    <div key={item.label} className="info-item">
+                      <div className="info-item-label">{item.label}</div>
+                      <div className="info-item-value">{item.value}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="info-item">
-              <div className="info-item-label">时区</div>
-              <div className="info-item-value">{countryInfo.timezone}</div>
-            </div>
-          </div>
-        </div>
-        
-        {/* 经济信息 */}
-        <div className="info-section">
-          <div className="info-section-title">经济信息</div>
-          <div className="info-grid">
-            <div className="info-item">
-              <div className="info-item-label">GDP</div>
-              <div className="info-item-value">
-                ${formatNumber(countryInfo.gdp)}
+            ))}
+
+            {countryInfo.resources && countryInfo.resources.length > 0 && (
+              <div className="info-section">
+                <div className="info-section-title">主要资源</div>
+                <div className="info-tags">
+                  {countryInfo.resources.map((r) => (
+                    <span key={r} className="info-tag">{r}</span>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="info-item">
-              <div className="info-item-label">货币</div>
-              <div className="info-item-value">{countryInfo.currency}</div>
-            </div>
-            <div className="info-item">
-              <div className="info-item-label">语言</div>
-              <div className="info-item-value">
-                {countryInfo.languages?.join(', ') || '未知'}
+            )}
+
+            {countryInfo.neighbors && countryInfo.neighbors.length > 0 && (
+              <div className="info-section">
+                <div className="info-section-title">邻国</div>
+                <div className="info-tags">
+                  {countryInfo.neighbors.map((n) => (
+                    <span key={n} className="info-tag">{n}</span>
+                  ))}
+                </div>
               </div>
+            )}
+
+            <div className="info-section">
+              <div className="info-section-title">简介</div>
+              <p className="info-description">{countryInfo.description}</p>
             </div>
-            <div className="info-item">
-              <div className="info-item-label">政府</div>
-              <div className="info-item-value">{countryInfo.government}</div>
-            </div>
-          </div>
-        </div>
-        
-        {/* 社会信息 */}
-        <div className="info-section">
-          <div className="info-section-title">社会信息</div>
-          <div className="info-grid">
-            <div className="info-item">
-              <div className="info-item-label">识字率</div>
-              <div className="info-item-value">{countryInfo.literacy}</div>
-            </div>
-            <div className="info-item">
-              <div className="info-item-label">预期寿命</div>
-              <div className="info-item-value">{countryInfo.lifeExpectancy}</div>
-            </div>
-            <div className="info-item">
-              <div className="info-item-label">HDI</div>
-              <div className="info-item-value">{countryInfo.hdi}</div>
-            </div>
-            <div className="info-item">
-              <div className="info-item-label">宗教</div>
-              <div className="info-item-value">{countryInfo.religion}</div>
-            </div>
-          </div>
-        </div>
-        
-        {/* 资源 */}
-        {countryInfo.resources && countryInfo.resources.length > 0 && (
-          <div className="info-section">
-            <div className="info-section-title">主要资源</div>
-            <div style={{ 
-              display: 'flex', 
-              flexWrap: 'wrap', 
-              gap: '8px' 
-            }}>
-              {countryInfo.resources.map((resource, index) => (
-                <span
-                  key={index}
-                  style={{
-                    background: 'var(--bg-tertiary)',
-                    padding: '4px 12px',
-                    borderRadius: '16px',
-                    fontSize: '13px',
-                    color: 'var(--text-secondary)',
-                  }}
-                >
-                  {resource}
-                </span>
-              ))}
-            </div>
-          </div>
+          </>
         )}
-        
-        {/* 邻国 */}
-        {countryInfo.neighbors && countryInfo.neighbors.length > 0 && (
-          <div className="info-section">
-            <div className="info-section-title">邻国</div>
-            <div style={{ 
-              display: 'flex', 
-              flexWrap: 'wrap', 
-              gap: '8px' 
-            }}>
-              {countryInfo.neighbors.map((neighbor, index) => (
-                <span
-                  key={index}
-                  style={{
-                    background: 'var(--bg-tertiary)',
-                    padding: '4px 12px',
-                    borderRadius: '16px',
-                    fontSize: '13px',
-                    color: 'var(--text-secondary)',
-                  }}
-                >
-                  {neighbor}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {/* 简介 */}
-        <div className="info-section">
-          <div className="info-section-title">简介</div>
-          <p style={{ 
-            fontSize: '14px', 
-            lineHeight: '1.6', 
-            color: '#94a3b8' 
-          }}>
-            {countryInfo.description}
-          </p>
-        </div>
       </div>
     </div>
   )

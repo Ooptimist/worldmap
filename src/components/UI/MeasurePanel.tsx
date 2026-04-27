@@ -17,20 +17,16 @@ export default function MeasurePanel({ isOpen, onClose }: MeasurePanelProps) {
   const [point2, setPoint2] = useState<MeasurePoint>({ lat: 0, lon: 0 })
   const [distance, setDistance] = useState<number | null>(null)
   
-  // 计算距离
   const handleCalculate = useCallback(() => {
-    const dist = calculateDistance(point1.lat, point1.lon, point2.lat, point2.lon)
-    setDistance(dist)
+    setDistance(calculateDistance(point1.lat, point1.lon, point2.lat, point2.lon))
   }, [point1, point2])
   
-  // 清除
   const handleClear = useCallback(() => {
     setPoint1({ lat: 0, lon: 0 })
     setPoint2({ lat: 0, lon: 0 })
     setDistance(null)
   }, [])
   
-  // 使用预设位置
   const handlePreset = useCallback((preset: string) => {
     const presets: Record<string, { point1: MeasurePoint; point2: MeasurePoint }> = {
       '北京-上海': {
@@ -50,11 +46,10 @@ export default function MeasurePanel({ isOpen, onClose }: MeasurePanelProps) {
         point2: { lat: -33.8688, lon: 151.2093, name: '悉尼' },
       },
     }
-    
-    const presetData = presets[preset]
-    if (presetData) {
-      setPoint1(presetData.point1)
-      setPoint2(presetData.point2)
+    const data = presets[preset]
+    if (data) {
+      setPoint1(data.point1)
+      setPoint2(data.point2)
       setDistance(null)
     }
   }, [])
@@ -67,129 +62,85 @@ export default function MeasurePanel({ isOpen, onClose }: MeasurePanelProps) {
       <div className="measure-panel">
         <div className="measure-header">
           <div className="measure-title">距离测量</div>
-          <button
-            className="measure-close-btn"
-            onClick={onClose}
-          >
-            ✕
+          <button className="measure-close-btn" onClick={onClose}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
           </button>
         </div>
         
         <div className="measure-content">
           <div className="measure-instructions">
-            输入两个地点的经纬度坐标，计算它们之间的直线距离。
+            输入两点经纬度计算球面距离
           </div>
           
-          {/* 预设位置 */}
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ 
-              fontSize: '13px', 
-              color: 'var(--text-muted)', 
-              marginBottom: '8px' 
-            }}>
-              快捷选择：
-            </div>
-            <div style={{ 
-              display: 'flex', 
-              flexWrap: 'wrap', 
-              gap: '8px' 
-            }}>
-              {['北京-上海', '北京-纽约', '伦敦-巴黎', '东京-悉尼'].map((preset) => (
-                <button
-                  key={preset}
-                  onClick={() => handlePreset(preset)}
-                  style={{
-                    padding: '6px 12px',
-                    background: 'var(--bg-tertiary)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '6px',
-                    color: 'var(--text-secondary)',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {preset}
-                </button>
-              ))}
-            </div>
+          <div className="measure-presets">
+            {['北京-上海', '北京-纽约', '伦敦-巴黎', '东京-悉尼'].map((preset) => (
+              <button
+                key={preset}
+                className="measure-preset-btn"
+                onClick={() => handlePreset(preset)}
+              >
+                {preset}
+              </button>
+            ))}
           </div>
           
-          {/* 起点 */}
           <div className="measure-points">
             <div className="measure-point">
               <div className="measure-point-label">
-                起点 {point1.name && `(${point1.name})`}
+                起点{point1.name ? ` · ${point1.name}` : ''}
               </div>
               <div className="measure-point-inputs">
                 <input
                   type="number"
                   className="measure-input"
-                  placeholder="纬度 (-90~90)"
+                  placeholder="纬度"
                   value={point1.lat || ''}
-                  onChange={(e) =>
-                    setPoint1({ ...point1, lat: parseFloat(e.target.value) || 0 })
-                  }
-                  min={-90}
-                  max={90}
-                  step={0.0001}
+                  onChange={(e) => setPoint1({ ...point1, lat: parseFloat(e.target.value) || 0 })}
+                  min={-90} max={90} step={0.0001}
                 />
                 <input
                   type="number"
                   className="measure-input"
-                  placeholder="经度 (-180~180)"
+                  placeholder="经度"
                   value={point1.lon || ''}
-                  onChange={(e) =>
-                    setPoint1({ ...point1, lon: parseFloat(e.target.value) || 0 })
-                  }
-                  min={-180}
-                  max={180}
-                  step={0.0001}
+                  onChange={(e) => setPoint1({ ...point1, lon: parseFloat(e.target.value) || 0 })}
+                  min={-180} max={180} step={0.0001}
                 />
               </div>
             </div>
             
-            {/* 终点 */}
             <div className="measure-point">
               <div className="measure-point-label">
-                终点 {point2.name && `(${point2.name})`}
+                终点{point2.name ? ` · ${point2.name}` : ''}
               </div>
               <div className="measure-point-inputs">
                 <input
                   type="number"
                   className="measure-input"
-                  placeholder="纬度 (-90~90)"
+                  placeholder="纬度"
                   value={point2.lat || ''}
-                  onChange={(e) =>
-                    setPoint2({ ...point2, lat: parseFloat(e.target.value) || 0 })
-                  }
-                  min={-90}
-                  max={90}
-                  step={0.0001}
+                  onChange={(e) => setPoint2({ ...point2, lat: parseFloat(e.target.value) || 0 })}
+                  min={-90} max={90} step={0.0001}
                 />
                 <input
                   type="number"
                   className="measure-input"
-                  placeholder="经度 (-180~180)"
+                  placeholder="经度"
                   value={point2.lon || ''}
-                  onChange={(e) =>
-                    setPoint2({ ...point2, lon: parseFloat(e.target.value) || 0 })
-                  }
-                  min={-180}
-                  max={180}
-                  step={0.0001}
+                  onChange={(e) => setPoint2({ ...point2, lon: parseFloat(e.target.value) || 0 })}
+                  min={-180} max={180} step={0.0001}
                 />
               </div>
             </div>
           </div>
           
-          {/* 计算结果 */}
           {distance !== null && (
             <div className="measure-result">
-              <div className="measure-result-label">两点间距离</div>
+              <div className="measure-result-label">球面距离</div>
               <div className="measure-result-value">
-                {distance >= 1000
-                  ? (distance / 1000).toFixed(2)
-                  : distance.toFixed(1)}
+                {distance >= 1000 ? (distance / 1000).toFixed(2) : distance.toFixed(1)}
                 <span className="measure-result-unit">
                   {distance >= 1000 ? '千公里' : '公里'}
                 </span>
@@ -197,19 +148,12 @@ export default function MeasurePanel({ isOpen, onClose }: MeasurePanelProps) {
             </div>
           )}
           
-          {/* 操作按钮 */}
           <div className="measure-actions">
-            <button
-              className="measure-btn measure-btn-secondary"
-              onClick={handleClear}
-            >
+            <button className="measure-btn measure-btn-secondary" onClick={handleClear}>
               清除
             </button>
-            <button
-              className="measure-btn measure-btn-primary"
-              onClick={handleCalculate}
-            >
-              计算距离
+            <button className="measure-btn measure-btn-primary" onClick={handleCalculate}>
+              计算
             </button>
           </div>
         </div>

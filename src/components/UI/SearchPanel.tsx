@@ -15,14 +15,11 @@ export default function SearchPanel() {
   const [isFocused, setIsFocused] = useState(false)
   const [countries, setCountries] = useState<GeoFeature[]>([])
   
-  // 加载国家数据
   useEffect(() => {
     const loadData = async () => {
       try {
         const response = await fetch('https://unpkg.com/world-atlas@2/countries-110m.json')
         const data = await response.json()
-        
-        // 动态导入 topojson-client
         const topojson = await import('topojson-client')
         const geojson = topojson.feature(data, data.objects.countries)
         setCountries((geojson as any).features as GeoFeature[])
@@ -30,17 +27,14 @@ export default function SearchPanel() {
         console.error('Failed to load countries:', err)
       }
     }
-    
     loadData()
   }, [])
   
-  // 搜索处理
   const handleSearch = useCallback(
     (query: string) => {
       setSearchQuery(query)
       if (query.length >= 2) {
-        const results = searchGeoFeatures(countries, query)
-        setSearchResults(results)
+        setSearchResults(searchGeoFeatures(countries, query))
       } else {
         setSearchResults([])
       }
@@ -48,7 +42,6 @@ export default function SearchPanel() {
     [countries, setSearchQuery, setSearchResults]
   )
   
-  // 选择搜索结果
   const handleSelectResult = useCallback(
     (result: any) => {
       setSelectedCountry({
@@ -68,14 +61,22 @@ export default function SearchPanel() {
     [setSelectedCountry, setSearchQuery, setSearchResults]
   )
   
+  const showResults = isFocused && searchQuery.length >= 2
+  const hasResults = searchResults.length > 0
+
   return (
     <div className="search-panel">
       <div className="search-input-wrapper">
-        <span className="search-icon">🔍</span>
+        <span className="search-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+        </span>
         <input
           type="text"
           className="search-input"
-          placeholder="搜索国家、城市..."
+          placeholder="搜索国家..."
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
           onFocus={() => setIsFocused(true)}
@@ -83,9 +84,9 @@ export default function SearchPanel() {
         />
       </div>
       
-      {isFocused && searchResults.length > 0 && (
+      {showResults && (
         <div className="search-results">
-          {searchResults.map((result, index) => (
+          {hasResults ? searchResults.map((result, index) => (
             <div
               key={index}
               className="search-result-item"
@@ -93,20 +94,16 @@ export default function SearchPanel() {
             >
               <div className="search-result-name">{result.name}</div>
               <div className="search-result-subtitle">
-                {result.type === 'country' ? '国家' : '地区'} • {result.nameEn}
+                {result.type === 'country' ? '国家' : '地区'} · {result.nameEn}
               </div>
             </div>
-          ))}
-        </div>
-      )}
-      
-      {isFocused && searchQuery.length >= 2 && searchResults.length === 0 && (
-        <div className="search-results">
-          <div className="search-result-item">
-            <div className="search-result-name" style={{ color: '#94a3b8' }}>
-              未找到结果
+          )) : (
+            <div className="search-result-item">
+              <div className="search-result-name" style={{ color: 'var(--text-muted)' }}>
+                未找到结果
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>

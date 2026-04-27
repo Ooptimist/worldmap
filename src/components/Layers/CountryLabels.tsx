@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
+import * as THREE from 'three'
 import { useEarthStore } from '@/stores/earthStore'
 import { latLonToVector3 } from '@/utils/geo'
 
@@ -12,99 +13,91 @@ interface CountryLabel {
   population: number
 }
 
-// 主要国家数据
+// 坐标为各国首都位置
 const majorCountries: CountryLabel[] = [
-  { name: '中国', nameEn: 'China', lat: 35.8617, lon: 104.1954, population: 1400000000 },
-  { name: '美国', nameEn: 'USA', lat: 37.0902, lon: -95.7129, population: 331000000 },
-  { name: '俄罗斯', nameEn: 'Russia', lat: 61.5240, lon: 105.3188, population: 146000000 },
-  { name: '加拿大', nameEn: 'Canada', lat: 56.1304, lon: -106.3468, population: 38000000 },
-  { name: '巴西', nameEn: 'Brazil', lat: -14.2350, lon: -51.9253, population: 213000000 },
-  { name: '澳大利亚', nameEn: 'Australia', lat: -25.2744, lon: 133.7751, population: 26000000 },
-  { name: '印度', nameEn: 'India', lat: 20.5937, lon: 78.9629, population: 1380000000 },
-  { name: '阿根廷', nameEn: 'Argentina', lat: -38.4161, lon: -63.6167, population: 45000000 },
-  { name: '哈萨克斯坦', nameEn: 'Kazakhstan', lat: 48.0196, lon: 66.9237, population: 19000000 },
-  { name: '阿尔及利亚', nameEn: 'Algeria', lat: 28.0339, lon: 1.6596, population: 44000000 },
-  { name: '刚果(金)', nameEn: 'DR Congo', lat: -4.0383, lon: 21.7587, population: 90000000 },
-  { name: '沙特阿拉伯', nameEn: 'Saudi Arabia', lat: 23.8859, lon: 45.0792, population: 35000000 },
-  { name: '墨西哥', nameEn: 'Mexico', lat: 23.6345, lon: -102.5528, population: 130000000 },
-  { name: '印度尼西亚', nameEn: 'Indonesia', lat: -0.7893, lon: 113.9213, population: 274000000 },
-  { name: '日本', nameEn: 'Japan', lat: 36.2048, lon: 138.2529, population: 126000000 },
-  { name: '德国', nameEn: 'Germany', lat: 51.1657, lon: 10.4515, population: 83000000 },
-  { name: '英国', nameEn: 'UK', lat: 55.3781, lon: -3.4360, population: 68000000 },
-  { name: '法国', nameEn: 'France', lat: 46.2276, lon: 2.2137, population: 67000000 },
-  { name: '意大利', nameEn: 'Italy', lat: 41.8719, lon: 12.5674, population: 60000000 },
-  { name: '韩国', nameEn: 'South Korea', lat: 35.9078, lon: 127.7669, population: 52000000 },
-  { name: '西班牙', nameEn: 'Spain', lat: 40.4637, lon: -3.7492, population: 47000000 },
-  { name: '南非', nameEn: 'South Africa', lat: -30.5595, lon: 22.9375, population: 60000000 },
-  { name: '埃及', nameEn: 'Egypt', lat: 26.8206, lon: 30.8025, population: 102000000 },
-  { name: '土耳其', nameEn: 'Turkey', lat: 38.9637, lon: 35.2433, population: 84000000 },
-  { name: '伊朗', nameEn: 'Iran', lat: 32.4279, lon: 53.6880, population: 84000000 },
+  { name: '中国', nameEn: 'China', lat: 39.9042, lon: 116.4074, population: 1400000000 },         // 北京
+  { name: '美国', nameEn: 'USA', lat: 38.9072, lon: -77.0369, population: 331000000 },             // 华盛顿
+  { name: '俄罗斯', nameEn: 'Russia', lat: 55.7558, lon: 37.6173, population: 146000000 },         // 莫斯科
+  { name: '加拿大', nameEn: 'Canada', lat: 45.4215, lon: -75.6972, population: 38000000 },         // 渥太华
+  { name: '巴西', nameEn: 'Brazil', lat: -15.7975, lon: -47.8919, population: 213000000 },         // 巴西利亚
+  { name: '澳大利亚', nameEn: 'Australia', lat: -35.2809, lon: 149.1300, population: 26000000 },   // 堪培拉
+  { name: '印度', nameEn: 'India', lat: 28.6139, lon: 77.2090, population: 1380000000 },           // 新德里
+  { name: '阿根廷', nameEn: 'Argentina', lat: -34.6037, lon: -58.3816, population: 45000000 },     // 布宜诺斯艾利斯
+  { name: '哈萨克斯坦', nameEn: 'Kazakhstan', lat: 51.1280, lon: 71.4304, population: 19000000 },  // 阿斯塔纳
+  { name: '阿尔及利亚', nameEn: 'Algeria', lat: 36.7538, lon: 3.0588, population: 44000000 },      // 阿尔及尔
+  { name: '刚果(金)', nameEn: 'DR Congo', lat: -4.4419, lon: 15.2663, population: 90000000 },      // 金沙萨
+  { name: '沙特阿拉伯', nameEn: 'Saudi Arabia', lat: 24.7136, lon: 46.6753, population: 35000000 },// 利雅得
+  { name: '墨西哥', nameEn: 'Mexico', lat: 19.4326, lon: -99.1332, population: 130000000 },        // 墨西哥城
+  { name: '印度尼西亚', nameEn: 'Indonesia', lat: -6.2088, lon: 106.8456, population: 274000000 }, // 雅加达
+  { name: '日本', nameEn: 'Japan', lat: 35.6762, lon: 139.6503, population: 126000000 },           // 东京
+  { name: '德国', nameEn: 'Germany', lat: 52.5200, lon: 13.4050, population: 83000000 },           // 柏林
+  { name: '英国', nameEn: 'UK', lat: 51.5074, lon: -0.1278, population: 68000000 },               // 伦敦
+  { name: '法国', nameEn: 'France', lat: 48.8566, lon: 2.3522, population: 67000000 },             // 巴黎
+  { name: '意大利', nameEn: 'Italy', lat: 41.9028, lon: 12.4964, population: 60000000 },           // 罗马
+  { name: '韩国', nameEn: 'South Korea', lat: 37.5665, lon: 126.9780, population: 52000000 },      // 首尔
+  { name: '西班牙', nameEn: 'Spain', lat: 40.4168, lon: -3.7038, population: 47000000 },           // 马德里
+  { name: '南非', nameEn: 'South Africa', lat: -25.7479, lon: 28.2293, population: 60000000 },     // 比勒陀利亚
+  { name: '埃及', nameEn: 'Egypt', lat: 30.0444, lon: 31.2357, population: 102000000 },            // 开罗
+  { name: '土耳其', nameEn: 'Turkey', lat: 39.9334, lon: 32.8597, population: 84000000 },          // 安卡拉
+  { name: '伊朗', nameEn: 'Iran', lat: 35.6892, lon: 51.3890, population: 84000000 },              // 德黑兰
 ]
+
+// 预计算标签的3D位置
+const labelPositions = majorCountries.map((c) => ({
+  ...c,
+  position: latLonToVector3(c.lat, c.lon, 1.02),
+  normal: latLonToVector3(c.lat, c.lon, 1).normalize(),
+}))
 
 export default function CountryLabels() {
   const { showLabels } = useEarthStore()
   const { camera } = useThree()
-  const [visibleLabels, setVisibleLabels] = useState<CountryLabel[]>([])
-  
-  // 根据相机距离和人口过滤显示的标签
+  const cameraDir = useRef(new THREE.Vector3())
+
+  // 每帧更新可见标签（根据距离和背面剔除）
+  const visibleLabels = useRef<Set<string>>(new Set())
+
   useFrame(() => {
     const distance = camera.position.length()
-    let filtered: CountryLabel[] = []
-    
-    if (distance < 3) {
-      // 近距离显示所有主要国家
-      filtered = majorCountries
-    } else if (distance < 5) {
-      // 中距离显示人口较多的国家
-      filtered = majorCountries.filter((c) => c.population > 100000000)
-    } else {
-      // 远距离只显示超大国家
-      filtered = majorCountries.filter((c) => c.population > 500000000)
+    camera.getWorldDirection(cameraDir.current)
+    // 相机看向的反方向 = 从地球中心到相机的方向
+    const toCamera = camera.position.clone().normalize()
+
+    const newVisible = new Set<string>()
+
+    for (const label of labelPositions) {
+      // 距离过滤
+      if (distance >= 5 && label.population < 500000000) continue
+      if (distance >= 3 && distance < 5 && label.population < 100000000) continue
+
+      // 背面剔除：标签法线与相机方向的点积 > 0 才可见
+      const dot = label.normal.dot(toCamera)
+      if (dot < 0.05) continue // 留一点余量，边缘过渡更自然
+
+      newVisible.add(label.nameEn)
     }
-    
-    setVisibleLabels(filtered)
+
+    visibleLabels.current = newVisible
   })
-  
-  if (!showLabels) {
-    return null
-  }
-  
+
+  if (!showLabels) return null
+
   return (
     <group>
-      {visibleLabels.map((country) => {
-        const position = latLonToVector3(country.lat, country.lon, 1.02)
-        
-        return (
-          <Html
-            key={country.nameEn}
-            position={position}
-            center
-            distanceFactor={5}
-            style={{
-              pointerEvents: 'none',
-              userSelect: 'none',
-            }}
-          >
-            <div
-              style={{
-                background: 'rgba(0, 0, 0, 0.7)',
-                color: 'white',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                fontSize: '12px',
-                whiteSpace: 'nowrap',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                backdropFilter: 'blur(4px)',
-              }}
-            >
-              <div style={{ fontWeight: 'bold' }}>{country.name}</div>
-              <div style={{ fontSize: '10px', opacity: 0.8 }}>
-                {country.nameEn}
-              </div>
-            </div>
-          </Html>
-        )
-      })}
+      {labelPositions.map((label) => (
+        <Html
+          key={label.nameEn}
+          position={label.position}
+          distanceFactor={8}
+          style={{ pointerEvents: 'none', userSelect: 'none' }}
+        >
+          <div className="globe-label">
+            <div className="globe-label-dot" />
+            <div className="globe-label-text">{label.name}</div>
+            <div className="globe-label-sub">{label.nameEn}</div>
+          </div>
+        </Html>
+      ))}
     </group>
   )
 }

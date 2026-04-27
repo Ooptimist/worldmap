@@ -13,7 +13,6 @@ interface QuizQuestion {
   difficulty: 'easy' | 'medium' | 'hard'
 }
 
-// 生成随机问题
 function generateQuestion(): QuizQuestion {
   const countries = Object.values(countriesData)
   const randomCountry = countries[Math.floor(Math.random() * countries.length)]
@@ -30,11 +29,7 @@ function generateQuestion(): QuizQuestion {
           .map((c) => c.capital)
           .sort(() => Math.random() - 0.5)
           .slice(0, 3)
-        
-        const options = [country.capital, ...wrongCapitals].sort(
-          () => Math.random() - 0.5
-        )
-        
+        const options = [country.capital, ...wrongCapitals].sort(() => Math.random() - 0.5)
         return {
           id: `${country.id}-capital`,
           type: 'capital',
@@ -52,16 +47,11 @@ function generateQuestion(): QuizQuestion {
         const populationStr = country.population > 100000000
           ? `${(country.population / 100000000).toFixed(1)}亿`
           : `${(country.population / 10000).toFixed(0)}万`
-        
         const wrongPopulations = ['1亿', '5000万', '2亿', '3亿', '5亿']
           .filter((p) => p !== populationStr)
           .sort(() => Math.random() - 0.5)
           .slice(0, 3)
-        
-        const options = [populationStr, ...wrongPopulations].sort(
-          () => Math.random() - 0.5
-        )
-        
+        const options = [populationStr, ...wrongPopulations].sort(() => Math.random() - 0.5)
         return {
           id: `${country.id}-population`,
           type: 'population',
@@ -79,16 +69,11 @@ function generateQuestion(): QuizQuestion {
         const areaStr = country.area > 1000000
           ? `${(country.area / 1000000).toFixed(0)}百万平方公里`
           : `${(country.area / 10000).toFixed(0)}万平方公里`
-        
         const wrongAreas = ['100万平方公里', '50万平方公里', '200万平方公里', '300万平方公里']
           .filter((a) => a !== areaStr)
           .sort(() => Math.random() - 0.5)
           .slice(0, 3)
-        
-        const options = [areaStr, ...wrongAreas].sort(
-          () => Math.random() - 0.5
-        )
-        
+        const options = [areaStr, ...wrongAreas].sort(() => Math.random() - 0.5)
         return {
           id: `${country.id}-area`,
           type: 'area',
@@ -108,11 +93,7 @@ function generateQuestion(): QuizQuestion {
           .filter((c) => !country.continent.includes(c))
           .sort(() => Math.random() - 0.5)
           .slice(0, 3)
-        
-        const options = [country.continent, ...wrongContinents].sort(
-          () => Math.random() - 0.5
-        )
-        
+        const options = [country.continent, ...wrongContinents].sort(() => Math.random() - 0.5)
         return {
           id: `${country.id}-continent`,
           type: 'continent',
@@ -144,51 +125,36 @@ export default function QuizPanel({ isOpen, onClose }: QuizPanelProps) {
   const [totalQuestions, setTotalQuestions] = useState(0)
   const [streak, setStreak] = useState(0)
   
-  // 生成新问题
   const generateNewQuestion = useCallback(() => {
-    const question = generateQuestion()
-    setCurrentQuestion(question)
+    setCurrentQuestion(generateQuestion())
     setSelectedAnswer(null)
     setIsCorrect(null)
   }, [])
   
-  // 初始化
   useEffect(() => {
-    if (isOpen && !currentQuestion) {
-      generateNewQuestion()
-    }
+    if (isOpen && !currentQuestion) generateNewQuestion()
   }, [isOpen, currentQuestion, generateNewQuestion])
   
-  // 选择答案
   const handleSelectAnswer = useCallback(
     (answer: string) => {
-      if (selectedAnswer) return // 已经选择过答案
-      
+      if (selectedAnswer) return
       setSelectedAnswer(answer)
       const correct = answer === currentQuestion?.correctAnswer
       setIsCorrect(correct)
-      
       if (correct) {
         setScore((prev) => prev + 1)
         setStreak((prev) => prev + 1)
       } else {
         setStreak(0)
       }
-      
       setTotalQuestions((prev) => prev + 1)
-      
-      // 2秒后自动跳转到下一题
-      setTimeout(() => {
-        generateNewQuestion()
-      }, 2000)
+      setTimeout(generateNewQuestion, 2000)
     },
     [selectedAnswer, currentQuestion, generateNewQuestion]
   )
   
-  // 查看国家
   const handleViewCountry = useCallback(() => {
     if (currentQuestion) {
-      // 转换为 Country 类型
       const country = currentQuestion.country
       setSelectedCountry({
         id: country.id,
@@ -198,15 +164,11 @@ export default function QuizPanel({ isOpen, onClose }: QuizPanelProps) {
         population: country.population,
         area: country.area,
         continent: country.continent,
-        coordinates: new Vector3(
-          country.coordinates.lat,
-          country.coordinates.lon,
-          0
-        ),
+        coordinates: new Vector3(country.coordinates.lat, country.coordinates.lon, 0),
       })
       onClose()
     }
-  }, [currentQuestion, setSelectedCountry])
+  }, [currentQuestion, setSelectedCountry, onClose])
   
   const handleClose = useCallback(() => {
     onClose()
@@ -216,101 +178,84 @@ export default function QuizPanel({ isOpen, onClose }: QuizPanelProps) {
   if (!isOpen) return null
   
   return (
-    <div className="quiz-panel">
-      <div className="quiz-header">
-        <div className="quiz-title">地理知识问答</div>
-        <button
-          className="quiz-close-btn"
-          onClick={handleClose}
-        >
-          ✕
-        </button>
-      </div>
-      
-      <div className="quiz-stats">
-        <div className="quiz-stat">
-          <div className="quiz-stat-label">得分</div>
-          <div className="quiz-stat-value">{score}</div>
-        </div>
-        <div className="quiz-stat">
-          <div className="quiz-stat-label">题数</div>
-          <div className="quiz-stat-value">{totalQuestions}</div>
-        </div>
-        <div className="quiz-stat">
-          <div className="quiz-stat-label">连对</div>
-          <div className="quiz-stat-value">{streak}</div>
-        </div>
-        <div className="quiz-stat">
-          <div className="quiz-stat-label">正确率</div>
-          <div className="quiz-stat-value">
-            {totalQuestions > 0
-              ? `${Math.round((score / totalQuestions) * 100)}%`
-              : '0%'}
-          </div>
-        </div>
-      </div>
-      
-      {currentQuestion && (
-        <div className="quiz-content">
-          <div className="quiz-difficulty">
-            <span className={`difficulty-${currentQuestion.difficulty}`}>
-              {currentQuestion.difficulty === 'easy'
-                ? '简单'
-                : currentQuestion.difficulty === 'medium'
-                ? '中等'
-                : '困难'}
-            </span>
-          </div>
-          
-          <div className="quiz-question">{currentQuestion.question}</div>
-          
-          <div className="quiz-options">
-            {currentQuestion.options.map((option, index) => {
-              let optionClass = 'quiz-option'
-              if (selectedAnswer) {
-                if (option === currentQuestion.correctAnswer) {
-                  optionClass += ' correct'
-                } else if (
-                  option === selectedAnswer &&
-                  option !== currentQuestion.correctAnswer
-                ) {
-                  optionClass += ' wrong'
-                }
-              }
-              
-              return (
-                <button
-                  key={index}
-                  className={optionClass}
-                  onClick={() => handleSelectAnswer(option)}
-                  disabled={!!selectedAnswer}
-                >
-                  {option}
-                </button>
-              )
-            })}
-          </div>
-          
-          {selectedAnswer && (
-            <div className={`quiz-feedback ${isCorrect ? 'correct' : 'wrong'}`}>
-              {isCorrect ? '✓ 回答正确！' : '✗ 回答错误'}
-              <button
-                className="quiz-view-btn"
-                onClick={handleViewCountry}
-              >
-                查看{currentQuestion.country.name}
-              </button>
-            </div>
-          )}
-          
-          <button
-            className="quiz-next-btn"
-            onClick={generateNewQuestion}
-          >
-            下一题
+    <>
+      <div className="overlay" onClick={handleClose} />
+      <div className="quiz-panel">
+        <div className="quiz-header">
+          <div className="quiz-title">地理问答</div>
+          <button className="quiz-close-btn" onClick={handleClose}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
           </button>
         </div>
-      )}
-    </div>
+        
+        <div className="quiz-stats">
+          <div className="quiz-stat">
+            <div className="quiz-stat-label">得分</div>
+            <div className="quiz-stat-value">{score}</div>
+          </div>
+          <div className="quiz-stat">
+            <div className="quiz-stat-label">题数</div>
+            <div className="quiz-stat-value">{totalQuestions}</div>
+          </div>
+          <div className="quiz-stat">
+            <div className="quiz-stat-label">连对</div>
+            <div className="quiz-stat-value">{streak}</div>
+          </div>
+          <div className="quiz-stat">
+            <div className="quiz-stat-label">正确率</div>
+            <div className="quiz-stat-value">
+              {totalQuestions > 0 ? `${Math.round((score / totalQuestions) * 100)}%` : '--'}
+            </div>
+          </div>
+        </div>
+        
+        {currentQuestion && (
+          <div className="quiz-content">
+            <div className="quiz-difficulty">
+              <span className={`difficulty-${currentQuestion.difficulty}`}>
+                {currentQuestion.difficulty === 'easy' ? '简单' : currentQuestion.difficulty === 'medium' ? '中等' : '困难'}
+              </span>
+            </div>
+            
+            <div className="quiz-question">{currentQuestion.question}</div>
+            
+            <div className="quiz-options">
+              {currentQuestion.options.map((option, index) => {
+                let cls = 'quiz-option'
+                if (selectedAnswer) {
+                  if (option === currentQuestion.correctAnswer) cls += ' correct'
+                  else if (option === selectedAnswer) cls += ' wrong'
+                }
+                return (
+                  <button
+                    key={index}
+                    className={cls}
+                    onClick={() => handleSelectAnswer(option)}
+                    disabled={!!selectedAnswer}
+                  >
+                    {option}
+                  </button>
+                )
+              })}
+            </div>
+            
+            {selectedAnswer && (
+              <div className={`quiz-feedback ${isCorrect ? 'correct' : 'wrong'}`}>
+                <span>{isCorrect ? '回答正确' : '回答错误'}</span>
+                <button className="quiz-view-btn" onClick={handleViewCountry}>
+                  查看{currentQuestion.country.name}
+                </button>
+              </div>
+            )}
+            
+            <button className="quiz-next-btn" onClick={generateNewQuestion}>
+              下一题
+            </button>
+          </div>
+        )}
+      </div>
+    </>
   )
 }
