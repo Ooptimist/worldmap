@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Vector3 } from 'three'
 import { useEarthStore } from '@/stores/earthStore'
 import { countriesData, CountryData } from '@/data/countries'
@@ -124,8 +124,14 @@ export default function QuizPanel({ isOpen, onClose }: QuizPanelProps) {
   const [score, setScore] = useState(0)
   const [totalQuestions, setTotalQuestions] = useState(0)
   const [streak, setStreak] = useState(0)
+  const autoNextTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   
   const generateNewQuestion = useCallback(() => {
+    // 清除可能存在的自动下一题定时器
+    if (autoNextTimer.current) {
+      clearTimeout(autoNextTimer.current)
+      autoNextTimer.current = null
+    }
     setCurrentQuestion(generateQuestion())
     setSelectedAnswer(null)
     setIsCorrect(null)
@@ -148,7 +154,7 @@ export default function QuizPanel({ isOpen, onClose }: QuizPanelProps) {
         setStreak(0)
       }
       setTotalQuestions((prev) => prev + 1)
-      setTimeout(generateNewQuestion, 2000)
+      // 不再自动下一题，用户手动点击"下一题"按钮
     },
     [selectedAnswer, currentQuestion, generateNewQuestion]
   )
