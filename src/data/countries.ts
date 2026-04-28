@@ -614,6 +614,26 @@ export function getCountryById(id: string): CountryData | undefined {
   return countriesData[id]
 }
 
+// 根据英文名模糊查找国家（支持 world-atlas 中的各种写法）
+const _nameEnIndex = new Map<string, CountryData>()
+for (const c of Object.values(countriesData)) {
+  _nameEnIndex.set(c.nameEn.toLowerCase(), c)
+}
+
+export function getCountryByNameEn(nameEn: string): CountryData | undefined {
+  // 精确匹配
+  const exact = _nameEnIndex.get(nameEn.toLowerCase())
+  if (exact) return exact
+  // 包含匹配（处理 "United States of America" vs "United States" 等差异）
+  const lower = nameEn.toLowerCase()
+  for (const c of Object.values(countriesData)) {
+    if (c.nameEn.toLowerCase().includes(lower) || lower.includes(c.nameEn.toLowerCase())) {
+      return c
+    }
+  }
+  return undefined
+}
+
 // 搜索国家
 export function searchCountries(query: string): CountryData[] {
   const lowerQuery = query.toLowerCase()

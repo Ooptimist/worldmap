@@ -1,6 +1,8 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { useFrame, useThree } from '@react-three/fiber'
 import { useEarthStore } from '@/stores/earthStore'
 import { latLonToVector3 } from '@/utils/geo'
+import * as THREE from 'three'
 
 // 中国省份数据（简化）
 const chinaProvinces = [
@@ -40,10 +42,21 @@ const chinaProvinces = [
   { name: '澳门特别行政区', lat: 22.1987, lon: 113.5439 },
 ]
 
+// 预计算省份标记的法线（用于背面剔除）
+const provinceData = chinaProvinces.map((p) => ({
+  ...p,
+  position: latLonToVector3(p.lat, p.lon, 1.005),
+  normal: latLonToVector3(p.lat, p.lon, 1).normalize(),
+}))
+
 export default function ProvinceBorders() {
   const { selectedCountry, showBorders } = useEarthStore()
+  const { camera } = useThree()
   const [showProvinces, setShowProvinces] = useState(false)
-  
+  const [visibleProvinces, setVisibleProvinces] = useState<Set<string>>(new Set())
+  const prevVisibleRef = useRef<Set<string>>(new Set())
+  const frameCount = useRef(0)
+
   // 当选中中国时显示省份
   useEffect(() => {
     if (selectedCountry?.id === 'CHN') {
@@ -52,30 +65,44 @@ export default function ProvinceBorders() {
       setShowProvinces(false)
     }
   }, [selectedCountry])
-  
-  // 创建省份标记点
-  const provinceMarkers = useMemo(() => {
-    if (!showProvinces || !showBorders) return []
-    
-    return chinaProvinces.map((province) => ({
-      ...province,
-      position: latLonToVector3(province.lat, province.lon, 1.005),
-    }))
-  }, [showProvinces, showBorders])
-  
+
+  // 背面剔除：只显示正对相机的省份标记
+  useFrame(() => {
+    if (!showProvinces) return
+
+    const toCamera = camera.position.clone().normalize()
+    const newVisible = new Set<string>()
+
+    for (const province of provinceData) {
+      const dot = province.normal.dot(toCamera)
+      if (dot > 0.2) {
+        newVisible.add(province.name)
+      }
+    }
+
+    // 每3帧检测一次
+    frameCount.current++
+    if (frameCount.current % 3 !== 0) return
+
+    // 只在变化时更新
+    const prev = prevVisibleRef.current
+    if (prev.size !== newVisible.size) {
+      prevVisibleRef.current = newVisible
+      setVisibleProvinces(newVisible)
+      return
+    }
+    for (const key of newVisible) {
+      if (!prev.has(key)) {
+        prevVisibleRef.current = newVisible
+        setVisibleProvinces(newVisible)
+        return
+      }
+    }
+  })
+
   if (!showProvinces || !showBorders) {
     return null
   }
-  
-  return (
-    <group>
-      {/* 省份标记点 */}
-      {provinceMarkers.map((province) => (
-        <mesh key={province.name} position={province.position}>
-          <sphereGeometry args={[0.008, 8, 8]} />
-          <meshBasicMaterial color={0x22c55e} />
-        </mesh>
-      ))}
-    </group>
-  )
+
+  return null
 }

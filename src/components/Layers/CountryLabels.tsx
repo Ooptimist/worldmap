@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState, useCallback } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -54,50 +54,74 @@ export default function CountryLabels() {
   const { camera } = useThree()
   const cameraDir = useRef(new THREE.Vector3())
 
-  // 每帧更新可见标签（根据距离和背面剔除）
-  const visibleLabels = useRef<Set<string>>(new Set())
+  // 用 Set 记录当前可见标签，仅在变化时触发重渲染
+  const [visibleSet, setVisibleSet] = useState<Set<string>>(() => new Set())
+  const prevVisibleRef = useRef<Set<string>>(new Set())
+  const frameCount = useRef(0)
 
   useFrame(() => {
     const distance = camera.position.length()
     camera.getWorldDirection(cameraDir.current)
-    // 相机看向的反方向 = 从地球中心到相机的方向
     const toCamera = camera.position.clone().normalize()
 
     const newVisible = new Set<string>()
 
     for (const label of labelPositions) {
-      // 距离过滤
+      // 距离过滤：远距离只显示人口大国
       if (distance >= 5 && label.population < 500000000) continue
       if (distance >= 3 && distance < 5 && label.population < 100000000) continue
 
       // 背面剔除：标签法线与相机方向的点积 > 0 才可见
       const dot = label.normal.dot(toCamera)
-      if (dot < 0.05) continue // 留一点余量，边缘过渡更自然
+      if (dot < 0.6) continue // 标签接近球体边缘时淡出隐藏
 
       newVisible.add(label.nameEn)
     }
 
-    visibleLabels.current = newVisible
+    // 每3帧检测一次，减少 setState 频率
+    frameCount.current++
+    if (frameCount.current % 3 !== 0) return
+
+    // 只在可见集合真正变化时更新
+    const prev = prevVisibleRef.current
+    if (prev.size !== newVisible.size) {
+      prevVisibleRef.current = newVisible
+      setVisibleSet(newVisible)
+      return
+    }
+    for (const key of newVisible) {
+      if (!prev.has(key)) {
+        prevVisibleRef.current = newVisible
+        setVisibleSet(newVisible)
+        return
+      }
+    }
   })
 
   if (!showLabels) return null
 
   return (
     <group>
-      {labelPositions.map((label) => (
-        <Html
-          key={label.nameEn}
-          position={label.position}
-          distanceFactor={8}
-          style={{ pointerEvents: 'none', userSelect: 'none' }}
-        >
-          <div className="globe-label">
-            <div className="globe-label-dot" />
-            <div className="globe-label-text">{label.name}</div>
-            <div className="globe-label-sub">{label.nameEn}</div>
-          </div>
-        </Html>
-      ))}
+      {labelPositions.map((label) => {
+        const isVisible = visibleSet.has(label.nameEn)
+        return (
+          <Html
+            key={label.nameEn}
+            position={label.position}
+            distanceFactor={8}
+            className="globe-label-container"
+            style={{ pointerEvents: 'none', userSelect: 'none' }}
+          >
+            <div
+              className={`globe-label ${isVisible ? 'globe-label--visible' : 'globe-label--hidden'}`}
+            >
+              <div className="globe-label-dot" />
+              <div className="globe-label-text">{label.name}</div>
+              <div className="globe-label-sub">{label.nameEn}</div>
+            </div>
+          </Html>
+        )
+      })}
     </group>
   )
 }

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useEarthStore } from '@/stores/earthStore'
 import { searchGeoFeatures } from '@/utils/geo'
+import { getCountryByNameEn } from '@/data/countries'
 import { GeoFeature } from '@/types'
 
 export default function SearchPanel() {
@@ -44,17 +45,20 @@ export default function SearchPanel() {
   
   const handleSelectResult = useCallback(
     (result: any) => {
+      // 通过英文名查找完整国家数据
+      const detail = getCountryByNameEn(result.nameEn)
+      
       setSelectedCountry({
-        id: result.nameEn,
-        name: result.name,
-        nameEn: result.nameEn,
-        capital: '',
-        population: 0,
-        area: 0,
-        continent: '',
+        id: detail?.id || result.nameEn,
+        name: detail?.name || result.name,
+        nameEn: detail?.nameEn || result.nameEn,
+        capital: detail?.capital || '未知',
+        population: detail?.population || 0,
+        area: detail?.area || 0,
+        continent: detail?.continent || '未知',
         coordinates: result.coordinates,
       })
-      setSearchQuery(result.name)
+      setSearchQuery(detail?.name || result.name)
       setSearchResults([])
       setIsFocused(false)
     },
@@ -79,7 +83,13 @@ export default function SearchPanel() {
           placeholder="搜索国家..."
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
-          onFocus={() => setIsFocused(true)}
+          onFocus={() => {
+            setIsFocused(true)
+            // 聚焦时如果已有查询文本，重新搜索以恢复结果列表
+            if (searchQuery.length >= 2) {
+              setSearchResults(searchGeoFeatures(countries, searchQuery))
+            }
+          }}
           onBlur={() => setTimeout(() => setIsFocused(false), 200)}
         />
       </div>
