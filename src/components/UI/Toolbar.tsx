@@ -20,6 +20,8 @@ export default function Toolbar({ onQuizClick, onMeasureClick }: { onQuizClick: 
     setShowLabels,
     showGrid,
     setShowGrid,
+    showProvinceMode,
+    setShowProvinceMode,
     resetView 
   } = useEarthStore()
   
@@ -70,6 +72,14 @@ export default function Toolbar({ onQuizClick, onMeasureClick }: { onQuizClick: 
         title={showGrid ? '隐藏经纬线' : '显示经纬线'}
       >
         <Icon d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18" />
+      </button>
+
+      <button
+        className={`toolbar-btn ${showProvinceMode ? 'active' : ''}`}
+        onClick={() => setShowProvinceMode(!showProvinceMode)}
+        title={showProvinceMode ? '关闭省份视图' : '中国省份'}
+      >
+        <Icon d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
       </button>
 
       <div className="toolbar-divider" />

@@ -9,7 +9,11 @@ interface EarthStore {
   showBorders: boolean
   showLabels: boolean
   showGrid: boolean
-  
+
+  // 省份模式
+  showProvinceMode: boolean
+  hoveredProvince: string | null
+
   // 选中状态
   selectedCountry: Country | null
   selectedProvince: Province | null
@@ -33,6 +37,8 @@ interface EarthStore {
   setShowBorders: (show: boolean) => void
   setShowLabels: (show: boolean) => void
   setShowGrid: (show: boolean) => void
+  setShowProvinceMode: (show: boolean) => void
+  setHoveredProvince: (name: string | null) => void
   setSelectedCountry: (country: Country | null) => void
   setSelectedProvince: (province: Province | null) => void
   setHoveredCountry: (country: Country | null) => void
@@ -51,6 +57,8 @@ export const useEarthStore = create<EarthStore>((set) => ({
   showBorders: true,
   showLabels: false,
   showGrid: false,
+  showProvinceMode: false,
+  hoveredProvince: null,
   selectedCountry: null,
   selectedProvince: null,
   hoveredCountry: null,
@@ -72,6 +80,8 @@ export const useEarthStore = create<EarthStore>((set) => ({
   setShowBorders: (showBorders) => set({ showBorders }),
   setShowLabels: (showLabels) => set({ showLabels }),
   setShowGrid: (showGrid) => set({ showGrid }),
+  setShowProvinceMode: (showProvinceMode) => set({ showProvinceMode, hoveredProvince: null }),
+  setHoveredProvince: (hoveredProvince) => set({ hoveredProvince }),
   setSelectedCountry: (selectedCountry) => set({ selectedCountry }),
   setSelectedProvince: (selectedProvince) => set({ selectedProvince }),
   setHoveredCountry: (hoveredCountry) => set({ hoveredCountry }),
@@ -83,5 +93,7 @@ export const useEarthStore = create<EarthStore>((set) => ({
     resetViewTrigger: state.resetViewTrigger + 1,
     selectedCountry: null,
     selectedProvince: null,
+    showProvinceMode: false,
+    hoveredProvince: null,
   })),
 }))
