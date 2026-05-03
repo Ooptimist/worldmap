@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { Country, Province, SearchResult, TooltipInfo } from '@/types'
+import { Country, Province, SearchResult, TooltipInfo, CityFeature } from '@/types'
 
 interface EarthStore {
   // 地球状态
@@ -13,6 +13,15 @@ interface EarthStore {
   // 省份模式
   showProvinceMode: boolean
   hoveredProvince: string | null
+
+  // 城市模式
+  showCityMode: boolean
+  selectedProvinceAdcode: number | null
+  selectedProvinceCenter: [number, number] | null // [lng, lat]
+  selectedProvinceName: string | null
+  cityData: CityFeature[]
+  isLoadingCities: boolean
+  selectedCityAdcode: number | null
 
   // 选中状态
   selectedCountry: Country | null
@@ -39,6 +48,11 @@ interface EarthStore {
   setShowGrid: (show: boolean) => void
   setShowProvinceMode: (show: boolean) => void
   setHoveredProvince: (name: string | null) => void
+  enterCityMode: (adcode: number, center: [number, number], name: string) => void
+  exitCityMode: () => void
+  setCityData: (data: CityFeature[]) => void
+  setIsLoadingCities: (loading: boolean) => void
+  setSelectedCity: (adcode: number | null) => void
   setSelectedCountry: (country: Country | null) => void
   setSelectedProvince: (province: Province | null) => void
   setHoveredCountry: (country: Country | null) => void
@@ -59,6 +73,13 @@ export const useEarthStore = create<EarthStore>((set) => ({
   showGrid: false,
   showProvinceMode: false,
   hoveredProvince: null,
+  showCityMode: false,
+  selectedProvinceAdcode: null,
+  selectedProvinceCenter: null,
+  selectedProvinceName: null,
+  cityData: [],
+  isLoadingCities: false,
+  selectedCityAdcode: null,
   selectedCountry: null,
   selectedProvince: null,
   hoveredCountry: null,
@@ -82,6 +103,27 @@ export const useEarthStore = create<EarthStore>((set) => ({
   setShowGrid: (showGrid) => set({ showGrid }),
   setShowProvinceMode: (showProvinceMode) => set({ showProvinceMode, hoveredProvince: null }),
   setHoveredProvince: (hoveredProvince) => set({ hoveredProvince }),
+  enterCityMode: (adcode, center, name) => set({
+    showCityMode: true,
+    selectedProvinceAdcode: adcode,
+    selectedProvinceCenter: center,
+    selectedProvinceName: name,
+    cityData: [],
+    isLoadingCities: false,
+    selectedCityAdcode: null,
+  }),
+  exitCityMode: () => set({
+    showCityMode: false,
+    selectedProvinceAdcode: null,
+    selectedProvinceCenter: null,
+    selectedProvinceName: null,
+    cityData: [],
+    isLoadingCities: false,
+    selectedCityAdcode: null,
+  }),
+  setCityData: (cityData) => set({ cityData, isLoadingCities: false }),
+  setIsLoadingCities: (isLoadingCities) => set({ isLoadingCities }),
+  setSelectedCity: (selectedCityAdcode) => set({ selectedCityAdcode }),
   setSelectedCountry: (selectedCountry) => set({ selectedCountry }),
   setSelectedProvince: (selectedProvince) => set({ selectedProvince }),
   setHoveredCountry: (hoveredCountry) => set({ hoveredCountry }),
@@ -95,5 +137,12 @@ export const useEarthStore = create<EarthStore>((set) => ({
     selectedProvince: null,
     showProvinceMode: false,
     hoveredProvince: null,
+    showCityMode: false,
+    selectedProvinceAdcode: null,
+    selectedProvinceCenter: null,
+    selectedProvinceName: null,
+    cityData: [],
+    isLoadingCities: false,
+    selectedCityAdcode: null,
   })),
 }))

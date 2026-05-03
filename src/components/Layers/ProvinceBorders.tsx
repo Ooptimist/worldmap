@@ -132,7 +132,11 @@ function createProvinceFillGeometry(
 const BORDER_RADIUS = 1.004 // 略高于国界线 1.002
 
 export default function ProvinceBorders() {
-  const { showProvinceMode, hoveredProvince, setHoveredProvince } = useEarthStore()
+  const showProvinceMode = useEarthStore((s) => s.showProvinceMode)
+  const hoveredProvince = useEarthStore((s) => s.hoveredProvince)
+  const setHoveredProvince = useEarthStore((s) => s.setHoveredProvince)
+  const showCityMode = useEarthStore((s) => s.showCityMode)
+  const enterCityMode = useEarthStore((s) => s.enterCityMode)
   const [geoData, setGeoData] = useState<ProvinceGeoJSON | null>(null)
   const [opacity, setOpacity] = useState(0)
   const opacityRef = useRef(0)
@@ -171,8 +175,14 @@ export default function ProvinceBorders() {
       const center = getProvinceCenter(feature)
       const normal = center.clone().normalize()
       const fillGeometry = createProvinceFillGeometry(lines, center)
+      // 保留原始中心坐标用于飞行动画和 API 请求
+      const rawCenter = feature.properties.center || feature.properties.centroid
       return {
         name: feature.properties.name,
+        adcode: feature.properties.adcode,
+        rawCenter: rawCenter && rawCenter.length >= 2
+          ? [rawCenter[0], rawCenter[1]] as [number, number]
+          : null,
         lines,
         center,
         normal,
@@ -201,6 +211,12 @@ export default function ProvinceBorders() {
       setOpacity(opacityRef.current)
     }
   })
+
+  // 点击省份处理
+  const handleProvinceClick = useCallback((province: { name: string; adcode: number; rawCenter: [number, number] | null }) => {
+    if (!province.rawCenter) return
+    enterCityMode(province.adcode, province.rawCenter, province.name)
+  }, [enterCityMode])
 
   // 不渲染条件
   if (!geoData || opacity < 0.01) return null
@@ -243,6 +259,10 @@ export default function ProvinceBorders() {
                   e.stopPropagation()
                   handlePointerOut()
                 }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleProvinceClick(province)
+                }}
               >
                 <meshBasicMaterial
                   transparent
@@ -255,8 +275,8 @@ export default function ProvinceBorders() {
               </mesh>
             )}
 
-            {/* 悬停时显示延伸线+省份名称 */}
-            {hovered && (
+            {/* 悬停时显示延伸线+省份名称（城市模式下隐藏） */}
+            {hovered && !showCityMode && (
               <ProvinceLabel
                 center={province.center}
                 camera={camera}

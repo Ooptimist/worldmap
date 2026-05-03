@@ -3,7 +3,7 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Earth } from './Earth'
 import { EarthControls } from './Controls'
-import { CountryBorders, CountryLabels, ProvinceBorders, GridLines } from './Layers'
+import { CountryBorders, CountryLabels, ProvinceBorders, CityMarkers, GridLines } from './Layers'
 
 function DynamicLighting() {
   const sunAngle = useRef(0)
@@ -61,6 +61,7 @@ export default function Scene() {
           <CountryBorders />
           <CountryLabels />
           <ProvinceBorders />
+          <CityMarkers />
           <GridLines />
           <EarthControls />
         </Suspense>

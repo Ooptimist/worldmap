@@ -10,8 +10,6 @@ function Icon({ d, size = 18 }: { d: string; size?: number }) {
 
 export default function Toolbar({ onQuizClick, onMeasureClick }: { onQuizClick: () => void; onMeasureClick: () => void }) {
   const { 
-    isRotating, 
-    setIsRotating, 
     showClouds,
     setShowClouds,
     showBorders,
@@ -27,20 +25,6 @@ export default function Toolbar({ onQuizClick, onMeasureClick }: { onQuizClick: 
   
   return (
     <div className="toolbar">
-      {/* 播放控制 */}
-      <button
-        className={`toolbar-btn ${isRotating ? 'active' : ''}`}
-        onClick={() => setIsRotating(!isRotating)}
-        title={isRotating ? '停止旋转' : '开始旋转'}
-      >
-        {isRotating
-          ? <Icon d="M6 4h4v16H6zM14 4h4v16h-4z" />
-          : <Icon d="M5 3l14 9-14 9V3z" />
-        }
-      </button>
-
-      <div className="toolbar-divider" />
-
       {/* 图层控制 */}
       <button
         className={`toolbar-btn ${showClouds ? 'active' : ''}`}

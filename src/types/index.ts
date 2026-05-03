@@ -61,6 +61,14 @@ export interface EarthState {
   viewState: ViewState
 }
 
+export interface CityFeature {
+  name: string
+  adcode: number
+  center: [number, number] // [lng, lat]
+  centroid?: [number, number]
+  level: string
+}
+
 export interface SearchResult {
   type: 'country' | 'province' | 'city'
   name: string
