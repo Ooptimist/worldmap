@@ -1,4 +1,5 @@
 import { useEarthStore } from '@/stores/earthStore'
+import { useRef, useEffect, useCallback } from 'react'
 
 function Icon({ d, size = 18 }: { d: string; size?: number }) {
   return (
@@ -20,8 +21,70 @@ export default function Toolbar({ onQuizClick, onMeasureClick }: { onQuizClick: 
     setShowGrid,
     showProvinceMode,
     setShowProvinceMode,
+    isMusicPlaying,
+    setIsMusicPlaying,
     resetView 
   } = useEarthStore()
+
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const hasInteracted = useRef(false)
+
+  // 初始化音频
+  useEffect(() => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio('/music/Earth From Silence.mp4')
+      audioRef.current.loop = true
+      audioRef.current.volume = 0.5
+    }
+  }, [])
+
+  // 播放/暂停控制
+  useEffect(() => {
+    if (!audioRef.current) return
+
+    if (isMusicPlaying) {
+      audioRef.current.play().catch(err => {
+        console.warn('播放音乐失败:', err)
+      })
+    } else {
+      audioRef.current.pause()
+    }
+  }, [isMusicPlaying])
+
+  // 用户首次交互时尝试播放（如果设置为默认播放）
+  useEffect(() => {
+    const handleInteraction = () => {
+      if (!hasInteracted.current) {
+        hasInteracted.current = true
+        if (isMusicPlaying && audioRef.current) {
+          audioRef.current.play().catch(err => {
+            console.warn('首次交互后播放失败:', err)
+          })
+        }
+        // 移除监听
+        document.removeEventListener('click', handleInteraction)
+        document.removeEventListener('keydown', handleInteraction)
+      }
+    }
+
+    document.addEventListener('click', handleInteraction)
+    document.addEventListener('keydown', handleInteraction)
+
+    return () => {
+      document.removeEventListener('click', handleInteraction)
+      document.removeEventListener('keydown', handleInteraction)
+    }
+  }, [isMusicPlaying])
+
+  // 组件卸载时暂停音乐
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.currentTime = 0
+      }
+    }
+  }, [])
   
   return (
     <div className="toolbar">
@@ -83,6 +146,18 @@ export default function Toolbar({ onQuizClick, onMeasureClick }: { onQuizClick: 
         title="距离测量"
       >
         <Icon d="M2 12h5M17 12h5M12 2v5M12 17v5M4.93 4.93l3.54 3.54M15.54 15.54l3.54 3.54M4.93 19.07l3.54-3.54M15.54 8.46l3.54-3.54" />
+      </button>
+
+      <button
+        className={`toolbar-btn ${isMusicPlaying ? 'active' : ''}`}
+        onClick={() => setIsMusicPlaying(!isMusicPlaying)}
+        title={isMusicPlaying ? '暂停音乐' : '播放音乐'}
+      >
+        {isMusicPlaying ? (
+          <Icon d="M5 4h3v16H5zM14 4h3v16h-3z" />
+        ) : (
+          <Icon d="M5 4l10 8-10 8V4z" />
+        )}
       </button>
 
       <div className="toolbar-divider" />

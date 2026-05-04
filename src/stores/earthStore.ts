@@ -38,6 +38,9 @@ interface EarthStore {
   
   // 视角重置触发器
   resetViewTrigger: number
+
+  // 背景音乐
+  isMusicPlaying: boolean
   
   // 动作
   setIsRotating: (isRotating: boolean) => void
@@ -61,6 +64,7 @@ interface EarthStore {
   setIsSearching: (isSearching: boolean) => void
   setTooltip: (tooltip: TooltipInfo) => void
   resetView: () => void
+  setIsMusicPlaying: (playing: boolean) => void
 }
 
 export const useEarthStore = create<EarthStore>((set) => ({
@@ -93,6 +97,7 @@ export const useEarthStore = create<EarthStore>((set) => ({
     type: 'country',
   },
   resetViewTrigger: 0,
+  isMusicPlaying: true,
   
   // 动作
   setIsRotating: (isRotating) => set({ isRotating }),
@@ -145,4 +150,5 @@ export const useEarthStore = create<EarthStore>((set) => ({
     isLoadingCities: false,
     selectedCityAdcode: null,
   })),
+  setIsMusicPlaying: (isMusicPlaying) => set({ isMusicPlaying }),
 }))
