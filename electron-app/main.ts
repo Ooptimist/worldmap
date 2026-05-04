@@ -6,6 +6,40 @@ const path = require('path');
 
 const { app, BrowserWindow, Menu, ipcMain } = electron;
 
+// 注册 IPC：返回背景音乐文件的 file:// 路径
+ipcMain.handle('get-music-path', async () => {
+  const isDev = !app.isPackaged;
+  let musicFile: string;
+
+  if (isDev) {
+    // 开发环境：直接使用项目根目录下的 public/music
+    musicFile = path.join(__dirname, 'public', 'music', 'Earth From Silence.mp4');
+    log(`[get-music-path] dev mode, path: ${musicFile}`);
+  } else {
+    // 打包后：extraResources 会将文件放到 resources/music/
+    musicFile = path.join(process.resourcesPath, 'music', 'Earth From Silence.mp4');
+    log(`[get-music-path] packaged, path: ${musicFile}`);
+  }
+
+  // 验证文件是否存在
+  const exists = fs.existsSync(musicFile);
+  log(`[get-music-path] exists: ${exists}`);
+
+  if (!exists) {
+    // fallback：尝试在 __dirname/dist/music/ 查找（Vite 构建输出目录）
+    const fallback = path.join(__dirname, 'dist', 'music', 'Earth From Silence.mp4');
+    log(`[get-music-path] fallback: ${fallback}, exists: ${fs.existsSync(fallback)}`);
+    if (fs.existsSync(fallback)) {
+      musicFile = fallback;
+    }
+  }
+
+  // 返回 file:// URL（Audio 对象需要完整的文件协议路径）
+  const fileUrl = 'file://' + musicFile.split(path.sep).join('/');
+  log(`[get-music-path] returning: ${fileUrl}`);
+  return fileUrl;
+});
+
 const logPath = 'C:\\temp\\electron-main.log';
 
 function log(msg: string) {

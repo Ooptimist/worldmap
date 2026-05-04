@@ -1,5 +1,5 @@
 import { useEarthStore } from '@/stores/earthStore'
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect, useState } from 'react'
 
 function Icon({ d, size = 18 }: { d: string; size?: number }) {
   return (
@@ -28,40 +28,69 @@ export default function Toolbar({ onQuizClick, onMeasureClick }: { onQuizClick: 
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const hasInteracted = useRef(false)
+  const [audioReady, setAudioReady] = useState(false)
 
-  // 初始化音频
+  // 异步初始化音频（Electron 下通过 IPC 获取真实路径）
   useEffect(() => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio('/music/Earth From Silence.mp4')
-      audioRef.current.loop = true
-      audioRef.current.volume = 0.5
+    let audio: HTMLAudioElement | null = null
+
+    const initAudio = async () => {
+      let musicPath = '/music/Earth From Silence.mp4'
+
+      if ((window as any).electronAPI?.getMusicPath) {
+        try {
+          const electronPath = await (window as any).electronAPI.getMusicPath()
+          if (electronPath) {
+            musicPath = electronPath
+            console.log('[Music] Electron path:', musicPath)
+          }
+        } catch (err) {
+          console.warn('[Music] getMusicPath failed:', err)
+        }
+      } else if (window.location.protocol === 'file:') {
+        musicPath = './dist/music/Earth From Silence.mp4'
+      }
+
+      console.log('[Music] Final path:', musicPath)
+      audio = new Audio(musicPath)
+      audio.loop = true
+      audio.volume = 0.5
+      audioRef.current = audio
+      setAudioReady(true)
+    }
+
+    initAudio()
+
+    return () => {
+      if (audio) {
+        audio.pause()
+        audio.currentTime = 0
+      }
+      audioRef.current = null
     }
   }, [])
 
-  // 播放/暂停控制
+  // 播放/暂停控制（等音频初始化完成后才执行）
   useEffect(() => {
-    if (!audioRef.current) return
+    if (!audioRef.current || !audioReady) return
 
     if (isMusicPlaying) {
       audioRef.current.play().catch(err => {
-        console.warn('播放音乐失败:', err)
+        console.warn('[Music] Play failed:', err)
       })
     } else {
       audioRef.current.pause()
     }
-  }, [isMusicPlaying])
+  }, [isMusicPlaying, audioReady])
 
-  // 用户首次交互时尝试播放（如果设置为默认播放）
+  // 用户首次交互后尝试播放（解决浏览器自动播放策略）
   useEffect(() => {
     const handleInteraction = () => {
       if (!hasInteracted.current) {
         hasInteracted.current = true
         if (isMusicPlaying && audioRef.current) {
-          audioRef.current.play().catch(err => {
-            console.warn('首次交互后播放失败:', err)
-          })
+          audioRef.current.play().catch(() => {})
         }
-        // 移除监听
         document.removeEventListener('click', handleInteraction)
         document.removeEventListener('keydown', handleInteraction)
       }
@@ -74,17 +103,7 @@ export default function Toolbar({ onQuizClick, onMeasureClick }: { onQuizClick: 
       document.removeEventListener('click', handleInteraction)
       document.removeEventListener('keydown', handleInteraction)
     }
-  }, [isMusicPlaying])
-
-  // 组件卸载时暂停音乐
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.currentTime = 0
-      }
-    }
-  }, [])
+  }, [isMusicPlaying, audioReady])
   
   return (
     <div className="toolbar">

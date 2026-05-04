@@ -1,4 +1,5 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 
-// 预加载脚本 — 暂不暴露 API，遵循最小权限原则
-contextBridge.exposeInMainWorld('electronAPI', {})
+contextBridge.exposeInMainWorld('electronAPI', {
+  getMusicPath: () => ipcRenderer.invoke('get-music-path')
+})

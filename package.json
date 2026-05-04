@@ -31,6 +31,12 @@
       "package.json",
       "!node_modules/**/*"
     ],
+    "extraResources": [
+      {
+        "from": "public/music",
+        "to": "music"
+      }
+    ],
     "win": {
       "target": [
         {
