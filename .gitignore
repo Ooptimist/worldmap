@@ -31,3 +31,22 @@ yarn-error.log*
 
 # OS
 Thumbs.db
+
+# Electron
+dist-electron/
+main.cjs
+preload.cjs
+electron-app/dist/
+
+# WorkBuddy
+.workbuddy/
+.codebuddy/
+
+# Build scripts (optional)
+build-exe.bat
+
+# Temp files
+*.ps1
+nul
+esbuild-main.cjs
+electron-portable-packaging.zip
